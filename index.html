@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>დავალებების მენეჯერი</title>
+
+    <!-- React 18 & ReactDOM UMD -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel Standalone (JSX-ის ბრაუზერში პირდაპირ გასაშვებად) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+      }
+
+      body {
+        background-color: #f0f4f8;
+        color: #2d3748;
+        display: flex;
+        justify-content: center;
+        padding: 40px 16px;
+        min-height: 100vh;
+      }
+
+      /* 🌙 Dark Mode Body */
+      body.dark-mode {
+        background-color: #0b1120;
+        color: #e2e8f0;
+      }
+
+      .app-container {
+        width: 100%;
+        max-width: 640px;
+        background-color: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+        padding: 28px 24px;
+        height: fit-content;
+      }
+
+      body.dark-mode .app-container {
+        background-color: #1e293b;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border: 1px solid #334155;
+      }
+
+      /* Header */
+      .header {
+        border-bottom: 2px solid #edf2f7;
+        padding-bottom: 18px;
+        margin-bottom: 22px;
+        text-align: center;
+      }
+
+      body.dark-mode .header {
+        border-bottom-color: #334155;
+      }
+
+      .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .header-top h1 {
+        font-size: 1.65rem;
+        color: #1a202c;
+        flex: 1;
+        text-align: center;
+      }
+
+      body.dark-mode .header-top h1 {
+        color: #f8fafc;
+      }
+
+      .btn-theme-toggle {
+        padding: 6px 12px;
+        border-radius: 20px;
+        border: 1px solid #cbd5e0;
+        background-color: #f7fafc;
+        color: #2d3748;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .btn-theme-toggle:hover {
+        background-color: #edf2f7;
+      }
+
+      body.dark-mode .btn-theme-toggle {
+        background-color: #334155;
+        color: #f8fafc;
+        border-color: #475569;
+      }
+
+      body.dark-mode .btn-theme-toggle:hover {
+        background-color: #475569;
+      }
+
+      .task-stats {
+        font-size: 0.95rem;
+        color: #4a5568;
+        margin-bottom: 16px;
+      }
+
+      body.dark-mode .task-stats {
+        color: #94a3b8;
+      }
+
+      .task-stats span {
+        font-weight: 500;
+      }
+
+      /* Progress Bar */
+      .progress-container {
+        margin-top: 10px;
+        background-color: #f7fafc;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #edf2f7;
+      }
+
+      body.dark-mode .progress-container {
+        background-color: #0f172a;
+        border-color: #334155;
+      }
+
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #4a5568;
+        margin-bottom: 6px;
+      }
+
+      body.dark-mode .progress-header {
+        color: #94a3b8;
+      }
+
+      .progress-bar-bg {
+        width: 100%;
+        height: 8px;
+        background-color: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      body.dark-mode .progress-bar-bg {
+        background-color: #334155;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3182ce, #38a169);
+        transition: width 0.3s ease;
+      }
+
+      /* Task Form */
+      .task-form {
+        margin-bottom: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background-color: #f8fafc;
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+      }
+
+      body.dark-mode .task-form {
+        background-color: #0f172a;
+        border-color: #334155;
+      }
+
+      .task-form > label {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #2d3748;
+      }
+
+      body.dark-mode .task-form > label {
+        color: #cbd5e1;
+      }
+
+      .form-inputs-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .form-inputs-group input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        outline: none;
+        background-color: #ffffff;
+        color: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      body.dark-mode .form-inputs-group input {
+        background-color: #1e293b;
+        border-color: #475569;
+        color: #f8fafc;
+      }
+
+      .form-inputs-group input:focus {
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+      }
+
+      .form-sub-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .duration-custom-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .duration-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #4a5568;
+      }
+
+      body.dark-mode .duration-label {
+        color: #cbd5e1;
+      }
+
+      .input-deadline-amount {
+        width: 90px !important;
+        padding: 8px 10px !important;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.88rem;
+        outline: none;
+        background-color: #ffffff;
+        color: inherit;
+      }
+
+      body.dark-mode .input-deadline-amount {
+        background-color: #1e293b;
+        border-color: #475569;
+        color: #f8fafc;
+      }
+
+      .select-deadline-unit {
+        padding: 8px 10px;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #2d3748;
+        font-size: 0.88rem;
+        outline: none;
+        cursor: pointer;
+      }
+
+      body.dark-mode .select-deadline-unit {
+        background-color: #1e293b;
+        border-color: #475569;
+        color: #f8fafc;
+      }
+
+      .btn-submit {
+        padding: 9px 20px;
+        background-color: #3182ce;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+
+      .btn-submit:hover {
+        background-color: #2b6cb0;
+      }
+
+      .btn-submit:active {
+        transform: scale(0.98);
+      }
+
+      /* Filter Controls */
+      .filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      body.dark-mode .filter-controls {
+        border-bottom-color: #334155;
+      }
+
+      .filter-buttons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .btn-filter {
+        padding: 6px 12px;
+        border: 1px solid #e2e8f0;
+        background-color: #f7fafc;
+        color: #4a5568;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-filter:hover {
+        background-color: #edf2f7;
+      }
+
+      body.dark-mode .btn-filter {
+        background-color: #0f172a;
+        border-color: #334155;
+        color: #94a3b8;
+      }
+
+      body.dark-mode .btn-filter:hover {
+        background-color: #334155;
+        color: #f8fafc;
+      }
+
+      .btn-filter.active {
+        background-color: #3182ce !important;
+        color: #ffffff !important;
+        border-color: #3182ce !important;
+        font-weight: 600;
+      }
+
+      .btn-clear-completed {
+        padding: 6px 12px;
+        border: 1px dashed #e53e3e;
+        background-color: transparent;
+        color: #e53e3e;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-clear-completed:hover {
+        background-color: #fff5f5;
+      }
+
+      body.dark-mode .btn-clear-completed {
+        border-color: #ef4444;
+        color: #f87171;
+      }
+
+      body.dark-mode .btn-clear-completed:hover {
+        background-color: #451a1a;
+      }
+
+      /* Task List */
+      .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .empty-message {
+        text-align: center;
+        color: #a0aec0;
+        padding: 24px 0;
+        font-size: 0.95rem;
+      }
+
+      body.dark-mode .empty-message {
+        color: #64748b;
+      }
+
+      /* Task Card */
+      .task-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background-color: #ffffff;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      body.dark-mode .task-card {
+        background-color: #0f172a;
+        border-color: #334155;
+      }
+
+      .task-card:hover {
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+      }
+
+      body.dark-mode .task-card:hover {
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .task-card.completed {
+        background-color: #f8fafc;
+        border-color: #e2e8f0;
+      }
+
+      body.dark-mode .task-card.completed {
+        background-color: #162032;
+        border-color: #1e293b;
+      }
+
+      .task-card.completed .task-title {
+        text-decoration: line-through;
+        color: #a0aec0;
+      }
+
+      body.dark-mode .task-card.completed .task-title {
+        color: #64748b;
+      }
+
+      .task-card.is-expired {
+        border-left: 4px solid #e53e3e;
+        background-color: #fffaf0;
+      }
+
+      body.dark-mode .task-card.is-expired {
+        border-left: 4px solid #ef4444;
+        background-color: #2b1616;
+      }
+
+      .task-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+        padding-right: 14px;
+      }
+
+      .task-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2d3748;
+        word-break: break-word;
+      }
+
+      body.dark-mode .task-title {
+        color: #f1f5f9;
+      }
+
+      .task-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+      }
+
+      .task-created {
+        color: #718096;
+      }
+
+      body.dark-mode .task-created {
+        color: #94a3b8;
+      }
+
+      .task-deadline-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+
+      .badge-normal {
+        background-color: #ebf8ff;
+        color: #2b6cb0;
+      }
+
+      body.dark-mode .badge-normal {
+        background-color: #1e3a5f;
+        color: #90cdf4;
+      }
+
+      .badge-urgent {
+        background-color: #feebc8;
+        color: #c05621;
+      }
+
+      body.dark-mode .badge-urgent {
+        background-color: #5c3214;
+        color: #fbd38d;
+      }
+
+      .badge-expired {
+        background-color: #fed7d7;
+        color: #9b2c2c;
+        animation: pulse 2s infinite;
+      }
+
+      body.dark-mode .badge-expired {
+        background-color: #581c1c;
+        color: #fca5a5;
+      }
+
+      .badge-done {
+        background-color: #c6f6d5;
+        color: #22543d;
+      }
+
+      body.dark-mode .badge-done {
+        background-color: #134e4a;
+        color: #6ee7b7;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+
+      .task-status {
+        font-size: 0.82rem;
+        color: #718096;
+        margin-top: 2px;
+      }
+
+      body.dark-mode .task-status {
+        color: #94a3b8;
+      }
+
+      .task-status strong {
+        color: #4a5568;
+      }
+
+      body.dark-mode .task-status strong {
+        color: #cbd5e1;
+      }
+
+      .task-card.completed .task-status strong {
+        color: #38a169;
+      }
+
+      body.dark-mode .task-card.completed .task-status strong {
+        color: #4ade80;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .btn-toggle {
+        padding: 6px 12px;
+        border: 1px solid #cbd5e0;
+        background-color: #edf2f7;
+        color: #2d3748;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-toggle:hover {
+        background-color: #e2e8f0;
+      }
+
+      body.dark-mode .btn-toggle {
+        background-color: #334155;
+        border-color: #475569;
+        color: #e2e8f0;
+      }
+
+      body.dark-mode .btn-toggle:hover {
+        background-color: #475569;
+      }
+
+      .task-card.completed .btn-toggle {
+        background-color: #feebc8;
+        border-color: #fbd38d;
+        color: #744210;
+      }
+
+      body.dark-mode .task-card.completed .btn-toggle {
+        background-color: #4a2810;
+        border-color: #7c2d12;
+        color: #fed7aa;
+      }
+
+      .btn-delete {
+        padding: 6px 10px;
+        border: none;
+        background-color: #fed7d7;
+        color: #9b2c2c;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-delete:hover {
+        background-color: #feb2b2;
+      }
+
+      body.dark-mode .btn-delete {
+        background-color: #451a1a;
+        color: #fca5a5;
+      }
+
+      body.dark-mode .btn-delete:hover {
+        background-color: #5c1d1d;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // 1. Header კომპონენტი (სტატისტიკა, პროგრესი და ჩაბნელების ღილაკი)
+      function Header({ totalTasks, completedTasks, remainingTasks, isDarkMode, onToggleTheme }) {
+        const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        return (
+          <header className="header">
+            <div className="header-top">
+              <h1>დავალებების მენეჯერი</h1>
+              <button
+                type="button"
+                className="btn-theme-toggle"
+                onClick={onToggleTheme}
+                title={isDarkMode ? 'ღია რეჟიმზე გადართვა' : 'მუქ რეჟიმზე გადართვა'}
+              >
+                {isDarkMode ? '☀️ ღია' : '🌙 მუქი'}
+              </button>
+            </div>
+
+            <div className="task-stats">
+              <span>სულ: {totalTasks}</span> | <span>შესრულებული: {completedTasks}</span> | <span>დარჩენილი: {remainingTasks}</span>
+            </div>
+
+            <div className="progress-container">
+              <div className="progress-header">
+                <span>შესრულების პროგრესი</span>
+                <strong>{progressPercentage}%</strong>
+              </div>
+              <div className="progress-bar-bg">
+                <div
+                  className="progress-bar-fill"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+            </div>
+          </header>
+        );
+      }
+
+      // 2. TaskForm კომპონენტი (ვადის ხელით ჩაწერის ველი)
+      function TaskForm({ onAdd }) {
+        const [title, setTitle] = useState('');
+        const [deadlineAmount, setDeadlineAmount] = useState('');
+        const [deadlineUnit, setDeadlineUnit] = useState('hours'); // 'minutes' | 'hours' | 'days'
+
+        const handleSubmit = (event) => {
+          event.preventDefault();
+
+          const trimmedTitle = title.trim();
+          if (!trimmedTitle) {
+            return;
+          }
+
+          let expiresAt = null;
+          let durationLabel = 'ვადის გარეშე';
+
+          const num = parseFloat(deadlineAmount);
+          if (!isNaN(num) && num > 0) {
+            const now = Date.now();
+            if (deadlineUnit === 'minutes') {
+              expiresAt = now + num * 60 * 1000;
+              durationLabel = `${num} წუთი`;
+            } else if (deadlineUnit === 'hours') {
+              expiresAt = now + num * 60 * 60 * 1000;
+              durationLabel = `${num} საათი`;
+            } else if (deadlineUnit === 'days') {
+              expiresAt = now + num * 24 * 60 * 60 * 1000;
+              durationLabel = `${num} დღე`;
+            }
+          }
+
+          const now = new Date();
+          const formattedCreatedAt =
+            now.toLocaleDateString('ka-GE', {
+              month: 'short',
+              day: 'numeric',
+            }) +
+            ', ' +
+            now.toLocaleTimeString('ka-GE', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+
+          const newTask = {
+            id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+            title: trimmedTitle,
+            completed: false,
+            createdAt: formattedCreatedAt,
+            expiresAt: expiresAt,
+            durationLabel: durationLabel,
+          };
+
+          onAdd(newTask);
+          setTitle('');
+          setDeadlineAmount('');
+        };
+
+        return (
+          <form className="task-form" onSubmit={handleSubmit}>
+            <label htmlFor="task-title-input">ახალი დავალების დამატება:</label>
+            
+            <div className="form-inputs-group">
+              <input
+                id="task-title-input"
+                type="text"
+                placeholder="შეიყვანეთ დავალების სათაური..."
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+              />
+
+              <div className="form-sub-controls">
+                <div className="duration-custom-wrapper">
+                  <label htmlFor="task-deadline-amount" className="duration-label">
+                    ვადა (ჩაწერეთ):
+                  </label>
+                  <input
+                    id="task-deadline-amount"
+                    type="number"
+                    min="1"
+                    placeholder="მაგ. 2"
+                    value={deadlineAmount}
+                    onChange={(e) => setDeadlineAmount(e.target.value)}
+                    className="input-deadline-amount"
+                  />
+                  <select
+                    value={deadlineUnit}
+                    onChange={(e) => setDeadlineUnit(e.target.value)}
+                    className="select-deadline-unit"
+                    aria-label="ვადის ერთეული"
+                  >
+                    <option value="hours">საათი</option>
+                    <option value="days">დღე</option>
+                    <option value="minutes">წუთი</option>
+                  </select>
+                </div>
+
+                <button type="submit" className="btn-submit">
+                  დამატება
+                </button>
+              </div>
+            </div>
+          </form>
+        );
+      }
+
+      function getDeadlineStatus(task) {
+        if (!task.expiresAt) {
+          return { text: 'ვადის გარეშე', type: 'none' };
+        }
+
+        if (task.completed) {
+          return { text: 'შესრულებულია', type: 'done' };
+        }
+
+        const diffMs = task.expiresAt - Date.now();
+        if (diffMs <= 0) {
+          return { text: 'ვადაგასულია! ⚠️', type: 'expired' };
+        }
+
+        const totalMinutes = Math.floor(diffMs / (1000 * 60));
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+          return { text: `დარჩა: ${days} დღე`, type: 'normal' };
+        }
+        if (hours > 0) {
+          return { text: `დარჩა: ${hours} სთ ${minutes} წთ`, type: 'normal' };
+        }
+        return { text: `დარჩა: ${minutes} წუთი`, type: 'urgent' };
+      }
+
+      // 3. TaskCard კომპონენტი
+      function TaskCard({ task, onToggle, onDelete }) {
+        const deadline = getDeadlineStatus(task);
+
+        return (
+          <div className={`task-card ${task.completed ? 'completed' : ''} ${deadline.type === 'expired' ? 'is-expired' : ''}`}>
+            <div className="task-info">
+              <h3 className="task-title">{task.title}</h3>
+              
+              <div className="task-meta">
+                <span className="task-created">
+                  📅 შექმნილია: {task.createdAt || 'ახლახან'}
+                </span>
+
+                {task.expiresAt && (
+                  <span className={`task-deadline-badge badge-${deadline.type}`}>
+                    ⏳ {deadline.text}
+                  </span>
+                )}
+              </div>
+
+              <p className="task-status">
+                სტატუსი: <strong>{task.completed ? 'შესრულებულია' : 'შესასრულებელია'}</strong>
+              </p>
+            </div>
+
+            <div className="task-actions">
+              <button
+                type="button"
+                className="btn-toggle"
+                onClick={() => onToggle(task.id)}
+              >
+                {task.completed ? 'დაბრუნება' : 'შესრულებულად მონიშვნა'}
+              </button>
+
+              <button
+                type="button"
+                className="btn-delete"
+                onClick={() => onDelete(task.id)}
+              >
+                წაშლა
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // 4. TaskList კომპონენტი
+      function TaskList({ tasks, onToggle, onDelete }) {
+        if (tasks.length === 0) {
+          return <p className="empty-message">დავალებები არ მოიძებნა.</p>;
+        }
+
+        return (
+          <div className="task-list">
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onToggle={onToggle}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        );
+      }
+
+      const now = Date.now();
+      const initialTasks = [
+        {
+          id: '1',
+          title: 'React-ის საფუძვლების შესწავლა',
+          completed: true,
+          createdAt: '16 ნოემ, 14:00',
+          expiresAt: now + 24 * 60 * 60 * 1000,
+          durationLabel: '24 საათი',
+        },
+        {
+          id: '2',
+          title: 'useState და props-ების გამოყენება',
+          completed: false,
+          createdAt: '16 ნოემ, 15:30',
+          expiresAt: now + 3 * 60 * 60 * 1000,
+          durationLabel: '3 საათი',
+        },
+        {
+          id: '3',
+          title: 'დავალებების მენეჯერის აპლიკაციის აწყობა',
+          completed: false,
+          createdAt: '16 ნოემ, 16:15',
+          expiresAt: now + 45 * 60 * 1000,
+          durationLabel: '45 წუთი',
+        },
+      ];
+
+      // 5. მთავარი App კომპონენტი
+      function App() {
+        const [tasks, setTasks] = useState(() => {
+          const saved = localStorage.getItem('nava_tasks');
+          if (saved) {
+            try {
+              return JSON.parse(saved);
+            } catch (e) {
+              return initialTasks;
+            }
+          }
+          return initialTasks;
+        });
+
+        const [filter, setFilter] = useState('all');
+
+        // Dark Mode State
+        const [isDarkMode, setIsDarkMode] = useState(() => {
+          return localStorage.getItem('nava_theme') === 'dark';
+        });
+
+        useEffect(() => {
+          localStorage.setItem('nava_theme', isDarkMode ? 'dark' : 'light');
+          if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+          } else {
+            document.body.classList.remove('dark-mode');
+          }
+        }, [isDarkMode]);
+
+        useEffect(() => {
+          localStorage.setItem('nava_tasks', JSON.stringify(tasks));
+        }, [tasks]);
+
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter((task) => task.completed).length;
+        const remainingTasks = tasks.filter((task) => !task.completed).length;
+
+        useEffect(() => {
+          document.title = `დარჩენილია: ${remainingTasks} დავალება`;
+        }, [remainingTasks]);
+
+        const handleAdd = (newTask) => {
+          setTasks((prevTasks) => [...prevTasks, newTask]);
+        };
+
+        const handleToggle = (id) => {
+          setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+              task.id === id ? { ...task, completed: !task.completed } : task
+            )
+          );
+        };
+
+        const handleDelete = (id) => {
+          setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+        };
+
+        const handleClearCompleted = () => {
+          setTasks((prevTasks) => prevTasks.filter((task) => !task.completed));
+        };
+
+        const filteredTasks = tasks.filter((task) => {
+          if (filter === 'active') return !task.completed;
+          if (filter === 'completed') return task.completed;
+          return true;
+        });
+
+        return (
+          <div className="app-container">
+            <Header
+              totalTasks={totalTasks}
+              completedTasks={completedTasks}
+              remainingTasks={remainingTasks}
+              isDarkMode={isDarkMode}
+              onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+            />
+
+            <TaskForm onAdd={handleAdd} />
+
+            <div className="filter-controls">
+              <div className="filter-buttons">
+                <button
+                  type="button"
+                  className={`btn-filter ${filter === 'all' ? 'active' : ''}`}
+                  onClick={() => setFilter('all')}
+                >
+                  ყველა ({totalTasks})
+                </button>
+                <button
+                  type="button"
+                  className={`btn-filter ${filter === 'active' ? 'active' : ''}`}
+                  onClick={() => setFilter('active')}
+                >
+                  შესასრულებელი ({remainingTasks})
+                </button>
+                <button
+                  type="button"
+                  className={`btn-filter ${filter === 'completed' ? 'active' : ''}`}
+                  onClick={() => setFilter('completed')}
+                >
+                  შესრულებული ({completedTasks})
+                </button>
+              </div>
+
+              {completedTasks > 0 && (
+                <button
+                  type="button"
+                  className="btn-clear-completed"
+                  onClick={handleClearCompleted}
+                >
+                  შესრულებულების წაშლა
+                </button>
+              )}
+            </div>
+
+            <TaskList
+              tasks={filteredTasks}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+            />
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
